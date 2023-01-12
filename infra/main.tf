@@ -33,13 +33,9 @@ variable "gh_access_token" {
 }
 
 resource "aws_amplify_app" "frontend" {
-  name                          = "serverless-todo-www"
-  access_token                  = var.gh_access_token
-  auto_branch_creation_patterns = ["feature/**"]
-  auto_branch_creation_config {
-    enable_auto_build = true
-  }
-  build_spec = file("${path.module}/amplify.yml")
+  name         = "serverless-todo-www"
+  access_token = var.gh_access_token
+  build_spec   = file("${path.module}/amplify.yml")
   custom_rule {
     source = "/<*>"
     status = "404-200"
