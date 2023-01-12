@@ -62,16 +62,8 @@ resource "aws_amplify_branch" "frontend_amplify_branch" {
   stage                       = "PRODUCTION"
 }
 
-variable "user_pool" {
-  description = "The different cognito user pools (prod, dev, ...) to supply."
-  type        = set(string)
-  default     = ["dev", "prod"]
-}
-
 resource "aws_cognito_user_pool" "pool" {
-  for_each = var.user_pool
-
-  name = "serverless-todo-pool-${each.value}"
+  name = "serverless-todo-pool"
   account_recovery_setting {
     recovery_mechanism {
       name     = "admin_only"
@@ -105,12 +97,16 @@ resource "aws_cognito_user_pool" "pool" {
 }
 
 resource "aws_cognito_user_pool_domain" "pool_domain" {
-  for_each     = var.user_pool
-  domain       = "${aws_amplify_app.frontend.id}-${each.value}"
-  user_pool_id = aws_cognito_user_pool.pool[each.key].id
+  domain       = aws_amplify_app.frontend.id
+  user_pool_id = aws_cognito_user_pool.pool.id
 }
 
 output "auth_url" {
-  value       = [for env in var.user_pool : "https://${aws_cognito_user_pool_domain.pool_domain[env].domain}.auth.${var.region}.amazoncognito.com"]
+  value       = "https://${aws_cognito_user_pool_domain.pool_domain.domain}.auth.${var.region}.amazoncognito.com"
   description = "URL to request for authentication in the frontend"
+}
+
+output "frontend_url" {
+  value       = "https://${aws_amplify_branch.frontend_amplify_branch.branch_name}.${aws_amplify_app.frontend.id}.amplifyapp.com"
+  description = "URL to redirect an authenticated user"
 }
