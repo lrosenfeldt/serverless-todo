@@ -101,8 +101,37 @@ resource "aws_cognito_user_pool_domain" "pool_domain" {
   user_pool_id = aws_cognito_user_pool.pool.id
 }
 
-output "auth_url" {
-  value       = "https://${aws_cognito_user_pool_domain.pool_domain.domain}.auth.${var.region}.amazoncognito.com"
+resource "aws_cognito_user_pool_client" "pool_client" {
+  access_token_validity                = 60
+  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_scopes = [
+    "email",
+    "openid",
+    "phone"
+  ]
+  callback_urls                                 = ["https://${aws_amplify_branch.frontend_amplify_branch.branch_name}.${aws_amplify_app.frontend.id}.amplifyapp.com", "http://localhost:8080", "http://localhost:3000"]
+  enable_propagate_additional_user_context_data = false
+  enable_token_revocation                       = true
+  explicit_auth_flows                           = ["ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_PASSWORD_AUTH", "ALLOW_USER_SRP_AUTH"]
+  generate_secret                               = false
+  id_token_validity                             = 60
+  logout_urls                                   = []
+  name                                          = aws_amplify_app.frontend.name
+  prevent_user_existence_errors                 = "ENABLED"
+  read_attributes                               = ["email", "email_verified", "name"]
+  supported_identity_providers                  = ["COGNITO"]
+  token_validity_units {
+    access_token  = "minutes"
+    id_token      = "minutes"
+    refresh_token = "days"
+  }
+  user_pool_id     = aws_cognito_user_pool.pool.id
+  write_attributes = ["email"]
+}
+
+output "auth_domain" {
+  value       = "${aws_cognito_user_pool_domain.pool_domain.domain}.auth.${var.region}.amazoncognito.com"
   description = "URL to request for authentication in the frontend"
 }
 
@@ -112,6 +141,6 @@ output "frontend_url" {
 }
 
 output "cognito_client_id" {
-  value       = aws_cognito_user_pool.pool.id
+  value       = aws_cognito_user_pool_client.pool_client.id
   description = "Cognito user pool ID"
 }
