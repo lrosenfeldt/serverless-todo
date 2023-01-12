@@ -110,3 +110,8 @@ output "frontend_url" {
   value       = "https://${aws_amplify_branch.frontend_amplify_branch.branch_name}.${aws_amplify_app.frontend.id}.amplifyapp.com"
   description = "URL to redirect an authenticated user"
 }
+
+output "cognito_client_id" {
+  value       = aws_cognito_user_pool.pool.id
+  description = "Cognito user pool ID"
+}
