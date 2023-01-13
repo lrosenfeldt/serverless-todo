@@ -116,7 +116,7 @@ resource "aws_cognito_user_pool_client" "pool_client" {
     "openid",
     "phone"
   ]
-  callback_urls                                 = ["http://localhost:3000/", "http://localhost:8080"]
+  callback_urls                                 = ["http://localhost:3000/", "http://localhost:8080", "https://${aws_amplify_branch.prod_branch.branch_name}.${aws_amplify_app.frontend.id}.amplifyapp.com"]
   enable_propagate_additional_user_context_data = false
   enable_token_revocation                       = true
   explicit_auth_flows                           = ["ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
