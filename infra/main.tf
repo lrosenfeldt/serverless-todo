@@ -75,11 +75,23 @@ resource "aws_cognito_user_pool" "pool" {
   }
   alias_attributes         = ["email"]
   auto_verified_attributes = ["email"]
-  deletion_protection      = "ACTIVE"
+  deletion_protection      = "INACTIVE"
   email_configuration {
     email_sending_account = "COGNITO_DEFAULT"
   }
   mfa_configuration = "OFF"
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "email"
+    required                 = true
+
+    string_attribute_constraints {
+      max_length = "2048"
+      min_length = "0"
+    }
+  }
   schema {
     attribute_data_type      = "String"
     developer_only_attribute = false
@@ -92,6 +104,19 @@ resource "aws_cognito_user_pool" "pool" {
       min_length = "0"
     }
   }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "email"
+    required                 = true
+    string_attribute_constraints {
+      max_length = "2048"
+      min_length = "0"
+    }
+  }
+
   user_attribute_update_settings {
     attributes_require_verification_before_update = ["email"]
   }
