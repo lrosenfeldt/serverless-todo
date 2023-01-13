@@ -1,5 +1,7 @@
 
 # Created by https://www.gitignore.io/api/osx,node,linux,windows
+### Vite ###
+dist
 ### Terraform ###
 .terraform
 # don't add variable files by default
