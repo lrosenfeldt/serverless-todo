@@ -30,6 +30,12 @@ variable "region" {
   default     = "eu-central-1"
 }
 
+variable "gh_access_token" {
+  type        = string
+  description = "GitHub Access Token for the serverless-todo repo"
+  sensitive   = true
+}
+
 provider "aws" {
   region = var.region
 }
