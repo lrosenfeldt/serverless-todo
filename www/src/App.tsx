@@ -6,6 +6,7 @@ import "./App.css";
 import logo from "./assets/aws.png";
 
 import config from "./config";
+import Hello from "./Hello";
 
 function App() {
   const [alert, setAlert] = useState("");
@@ -96,13 +97,17 @@ function App() {
               <img src={logo} alt="Logo" />
             </Col>
             <Col md="6">
-              <Button
-                href={`https://${config.cognito_hosted_domain}/login?response_type=token&client_id=${config.aws_user_pools_web_client_id}&redirect_uri=${config.redirect_url}`}
-                color="primary"
-                className="mt-5 float-center"
-              >
-                Log In
-              </Button>
+              {idToken.length > 0 ? (
+                <Hello />
+              ) : (
+                <Button
+                  href={`https://${config.cognito_hosted_domain}/login?response_type=token&client_id=${config.aws_user_pools_web_client_id}&redirect_uri=${config.redirect_url}`}
+                  color="primary"
+                  className="mt-5 float-center"
+                >
+                  Log In
+                </Button>
+              )}
             </Col>
           </Row>
         </Jumbotron>

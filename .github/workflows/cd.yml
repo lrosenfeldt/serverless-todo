@@ -1,0 +1,37 @@
+name: "API: Continous Deployment"
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+jobs:
+  cd:
+    name: "Deploy API & Infrastructure"
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - name: "Install Dependencies for API: /hello"
+        working-directory: ./api/hello
+        run: npm install
+      - name: "Build /hello"
+        working-directory: ./api/hello
+        run: npm run build
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      - name: Check Terraform formatting
+        working-directory: ./infra
+        run: terraform fmt -check
+      - name: Init Terraform
+        working-directory: ./infra
+        run: terraform init
+      - name: Validate Terraform
+        working-directory: ./infra
+        run: terraform validate -no-color
+      - name: Apply new infrastructure
+        working-directory: ./infra
+        run: terraform apply -auto-approve -input=false

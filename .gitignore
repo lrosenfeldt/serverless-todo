@@ -4,6 +4,7 @@
 dist
 ### Terraform ###
 .terraform
+infra/functions/
 # don't add variable files by default
 .*tfvars
 
