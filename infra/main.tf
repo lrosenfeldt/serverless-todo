@@ -54,7 +54,7 @@ resource "aws_amplify_app" "frontend" {
 }
 
 
-resource "aws_amplify_branch" "frontend_amplify_branch" {
+resource "aws_amplify_branch" "prod_branch" {
   app_id                      = aws_amplify_app.frontend.id
   branch_name                 = "master"
   enable_pull_request_preview = true
@@ -73,7 +73,9 @@ resource "aws_cognito_user_pool" "pool" {
   admin_create_user_config {
     allow_admin_create_user_only = false
   }
-  deletion_protection = "INACTIVE"
+  alias_attributes         = ["email"]
+  auto_verified_attributes = ["email"]
+  deletion_protection      = "ACTIVE"
   email_configuration {
     email_sending_account = "COGNITO_DEFAULT"
   }
@@ -82,7 +84,7 @@ resource "aws_cognito_user_pool" "pool" {
     attribute_data_type      = "String"
     developer_only_attribute = false
     mutable                  = true
-    name                     = "email"
+    name                     = "name"
     required                 = true
 
     string_attribute_constraints {
@@ -90,44 +92,86 @@ resource "aws_cognito_user_pool" "pool" {
       min_length = "0"
     }
   }
-  username_attributes = ["email"]
+  user_attribute_update_settings {
+    attributes_require_verification_before_update = ["email"]
+  }
   username_configuration {
     case_sensitive = false
   }
 }
 
 resource "aws_cognito_user_pool_domain" "pool_domain" {
-  domain       = aws_amplify_app.frontend.id
+  domain       = "serverless-todo"
   user_pool_id = aws_cognito_user_pool.pool.id
 }
 
 resource "aws_cognito_user_pool_client" "pool_client" {
   access_token_validity                = 60
-  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_flows                  = ["code", "implicit"]
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_scopes = [
+    "aws.cognito.signin.user.admin",
+    "profile",
     "email",
     "openid",
     "phone"
   ]
-  callback_urls                                 = ["https://${aws_amplify_branch.frontend_amplify_branch.branch_name}.${aws_amplify_app.frontend.id}.amplifyapp.com", "http://localhost:8080", "http://localhost:3000"]
+  callback_urls                                 = ["http://localhost:3000/", "http://localhost:8080"]
   enable_propagate_additional_user_context_data = false
   enable_token_revocation                       = true
-  explicit_auth_flows                           = ["ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_PASSWORD_AUTH", "ALLOW_USER_SRP_AUTH"]
+  explicit_auth_flows                           = ["ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
   generate_secret                               = false
   id_token_validity                             = 60
   logout_urls                                   = []
-  name                                          = aws_amplify_app.frontend.name
+  name                                          = "serverless-todo-www"
   prevent_user_existence_errors                 = "ENABLED"
-  read_attributes                               = ["email", "email_verified", "name"]
-  supported_identity_providers                  = ["COGNITO"]
+  read_attributes = [
+    "address",
+    "birthdate",
+    "email",
+    "email_verified",
+    "family_name",
+    "gender",
+    "given_name",
+    "locale",
+    "middle_name",
+    "name",
+    "nickname",
+    "phone_number",
+    "phone_number_verified",
+    "picture",
+    "preferred_username",
+    "profile",
+    "updated_at",
+    "website",
+    "zoneinfo"
+  ]
+  supported_identity_providers = ["COGNITO"]
   token_validity_units {
     access_token  = "minutes"
     id_token      = "minutes"
     refresh_token = "days"
   }
-  user_pool_id     = aws_cognito_user_pool.pool.id
-  write_attributes = ["email"]
+  user_pool_id = aws_cognito_user_pool.pool.id
+  write_attributes = [
+    "address",
+    "birthdate",
+    "email",
+    "family_name",
+    "gender",
+    "given_name",
+    "locale",
+    "middle_name",
+    "name",
+    "nickname",
+    "phone_number",
+    "picture",
+    "preferred_username",
+    "profile",
+    "updated_at",
+    "website",
+    "zoneinfo"
+  ]
 }
 
 output "auth_domain" {
@@ -136,7 +180,7 @@ output "auth_domain" {
 }
 
 output "frontend_url" {
-  value       = "https://${aws_amplify_branch.frontend_amplify_branch.branch_name}.${aws_amplify_app.frontend.id}.amplifyapp.com"
+  value       = "https://${aws_amplify_branch.prod_branch.branch_name}.${aws_amplify_app.frontend.id}.amplifyapp.com"
   description = "URL to redirect an authenticated user"
 }
 
