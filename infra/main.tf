@@ -40,12 +40,6 @@ provider "aws" {
   region = var.region
 }
 
-variable "gh_access_token" {
-  type        = string
-  description = "GitHub access token for the repository published to AWS."
-  sensitive   = true
-}
-
 resource "aws_amplify_app" "frontend" {
   name         = "serverless-todo-www"
   access_token = var.gh_access_token
