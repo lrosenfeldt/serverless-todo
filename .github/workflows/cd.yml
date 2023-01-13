@@ -25,13 +25,55 @@ jobs:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
       - name: Check Terraform formatting
         working-directory: ./infra
+        id: tf_fmt
         run: terraform fmt -check
       - name: Init Terraform
         working-directory: ./infra
+        id: tf_init
         run: terraform init
       - name: Validate Terraform
+        id: tf_validate
         working-directory: ./infra
         run: terraform validate -no-color
+      - name: Generate infrastructure plan via Terraform
+        working-directory: ./infra
+        id: tf_plan
+        if: github.event_name == "pull_request"
+        run: terraform plan -no-color -input-false
+        continue-on-error: true
+      - name: Post terraform plan to PR
+        uses: actions/github-script@v6
+        if: github.event_name == "pull_request"
+        env:
+          PLAN: "terraform\n${{ steps.tf_plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.tf_fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.tf_init.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.tf_plan.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.tf_validate.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Check Terraform plan status
+        if: steps.tf_plan.outcome == "failure"
+        run: exit 1
       - name: Apply new infrastructure
         working-directory: ./infra
         run: terraform apply -auto-approve -input=false
