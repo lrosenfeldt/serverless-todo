@@ -16,7 +16,7 @@ jobs:
       - name: "Install Dependencies for API: /hello"
         working-directory: ./api/hello
         run: npm install
-      - name: "Build /hello"
+      - name: "Build API endpoint /hello"
         working-directory: ./api/hello
         run: npm run build
       - name: Setup Terraform
