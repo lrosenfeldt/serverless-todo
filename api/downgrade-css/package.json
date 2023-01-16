@@ -1,0 +1,23 @@
+{
+  "name": "api-downgrade-css",
+  "version": "1.0.0",
+  "description": "Greet the world!",
+  "main": "./app.js",
+  "author": "Lukas Rosenfeldt",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc && mkdir -p ../../infra/functions/downgrade-css && cp -r ./build/* node_modules package*.json ../../infra/functions/downgrade-css",
+    "compile": "tsc",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "aws-lambda": "^1.0.7",
+    "postcss": "^8.4.21",
+    "postcss-preset-env": "^7.8.3"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.109",
+    "@types/node": "^18.11.18",
+    "typescript": "^4.9.4"
+  }
+}

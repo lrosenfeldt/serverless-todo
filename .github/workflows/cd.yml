@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  pull_request:
 jobs:
   cd:
     name: "Deploy API & Infrastructure"
@@ -18,6 +19,12 @@ jobs:
         run: npm install
       - name: "Build API endpoint /hello"
         working-directory: ./api/hello
+        run: npm run build
+      - name: "Install Dependencies for API: /downgrade-css"
+        working-directory: ./api/downgrade-css
+        run: npm install
+      - name: "Build API endpoint /downgrade-css"
+        working-directory: ./api/downgrade-css
         run: npm run build
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -38,42 +45,9 @@ jobs:
       - name: Generate infrastructure plan via Terraform
         working-directory: ./infra
         id: tf_plan
-        if: github.event_name == "pull_request"
-        run: terraform plan -no-color -input-false
-        continue-on-error: true
-      - name: Post terraform plan to PR
-        uses: actions/github-script@v6
-        if: github.event_name == "pull_request"
-        env:
-          PLAN: "terraform\n${{ steps.tf_plan.outputs.stdout }}"
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.tf_fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.tf_init.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.tf_plan.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.tf_validate.outcome }}\`
-
-            <details><summary>Show Plan</summary>
-
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>
-
-            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-
-      - name: Check Terraform plan status
-        if: steps.tf_plan.outcome == "failure"
-        run: exit 1
+        if: ${{ github.event_name == 'pull_request' }}
+        run: terraform plan -no-color -input=false
       - name: Apply new infrastructure
+        if: ${{ github.event_name == 'push' }}
         working-directory: ./infra
         run: terraform apply -auto-approve -input=false
