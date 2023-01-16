@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  pull_request:
 jobs:
   cd:
     name: "Deploy API & Infrastructure"
@@ -15,9 +16,15 @@ jobs:
           node-version: 14
       - name: "Install Dependencies for API: /hello"
         working-directory: ./api/hello
-        run: npm install
+        run: npm ci
       - name: "Build API endpoint /hello"
         working-directory: ./api/hello
+        run: npm run build
+      - name: "Install Dependencies for API: /downgrade-css"
+        working-directory: ./api/downgrade-css
+        run: npm ci
+      - name: "Build API endpoint /downgrade-css"
+        working-directory: ./api/downgrade-css
         run: npm run build
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
