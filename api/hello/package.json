@@ -7,7 +7,8 @@
   "license": "MIT",
   "scripts": {
     "check": "tsc --noEmit",
-    "build": "tsc"
+    "compile": "tsc",
+    "build": "tsc && mkdir -p ../../infra/functions/hello && cp -r ./build/* node_modules package*.json ../../infra/functions/hello"
   },
   "dependencies": {
     "aws-embedded-metrics": "^2.0.2",
