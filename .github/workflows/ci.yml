@@ -1,0 +1,23 @@
+name: "App: Continous Integration"
+on:
+  - workflow_dispatch
+  - push
+jobs:
+  ci:
+    name: "Deploy API & Infrastructure"
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ["./api/hello", "./api/hello", "./www"]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+      - name: Install Dependencies for ${{ matrix.package }}
+        working-directory: ${{ matrix.package }}
+        run: npm install
+      - name: Check types for ${{ matrix.package }}
+        working-directory: ${{ matrix.package }}
+        run: npm run check
