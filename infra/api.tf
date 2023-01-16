@@ -12,26 +12,50 @@ resource "aws_s3_bucket_acl" "bucket_acl" {
   acl    = "private"
 }
 
-data "archive_file" "lambda_hello" {
+variable "endpoints" {
+  type = map(object({
+    route  = string
+    method = string
+    name   = string
+  }))
+  description = "(optional) describe your variable"
+  default = {
+    "hello" = {
+      method = "GET"
+      route  = "hello"
+      name   = "Hello"
+    },
+    "downgrade-css" = {
+      method = "POST"
+      route  = "downgrade-css"
+      name   = "Downgrade-CSS"
+    }
+  }
+}
+
+data "archive_file" "lambda" {
+  for_each    = var.endpoints
   type        = "zip"
-  source_dir  = "${path.module}/functions/hello"
-  output_path = "${path.module}/hello.zip"
+  source_dir  = "${path.module}/functions/${each.key}"
+  output_path = "${path.module}/${each.key}.zip"
 }
 
-resource "aws_s3_object" "lambda_hello" {
-  bucket = aws_s3_bucket.lambda_bucket.id
-  key    = "hello.zip"
-  source = data.archive_file.lambda_hello.output_path
-  etag   = filemd5(data.archive_file.lambda_hello.output_path)
+resource "aws_s3_object" "lambda" {
+  for_each = var.endpoints
+  bucket   = aws_s3_bucket.lambda_bucket.id
+  key      = "${each.key}.zip"
+  source   = data.archive_file.lambda[each.key].output_path
+  etag     = filemd5(data.archive_file.lambda[each.key].output_path)
 }
 
-resource "aws_lambda_function" "hello" {
-  function_name    = "Hello"
+resource "aws_lambda_function" "lambda" {
+  for_each         = var.endpoints
+  function_name    = each.value.name
   s3_bucket        = aws_s3_bucket.lambda_bucket.id
-  s3_key           = aws_s3_object.lambda_hello.key
-  runtime          = "nodejs14.x"
+  s3_key           = aws_s3_object.lambda[each.key].key
+  runtime          = "nodejs16.x"
   handler          = "app.handler"
-  source_code_hash = data.archive_file.lambda_hello.output_base64sha256
+  source_code_hash = data.archive_file.lambda[each.key].output_base64sha256
   role             = aws_iam_role.lambda_exec.arn
 }
 
@@ -84,17 +108,19 @@ resource "aws_apigatewayv2_stage" "lambda" {
   }
 }
 
-resource "aws_apigatewayv2_integration" "hello" {
+resource "aws_apigatewayv2_integration" "lambda" {
+  for_each           = var.endpoints
   api_id             = aws_apigatewayv2_api.lambda.id
-  integration_uri    = aws_lambda_function.hello.invoke_arn
+  integration_uri    = aws_lambda_function.lambda[each.key].invoke_arn
   integration_type   = "AWS_PROXY"
   integration_method = "POST"
 }
 
-resource "aws_apigatewayv2_route" "hello" {
+resource "aws_apigatewayv2_route" "lambda" {
+  for_each  = var.endpoints
   api_id    = aws_apigatewayv2_api.lambda.id
-  route_key = "GET /hello"
-  target    = "integrations/${aws_apigatewayv2_integration.hello.id}"
+  route_key = "${each.value.method} /${each.key}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda[each.key].id}"
 }
 
 resource "aws_cloudwatch_log_group" "api_gw" {
@@ -103,20 +129,11 @@ resource "aws_cloudwatch_log_group" "api_gw" {
 }
 
 resource "aws_lambda_permission" "api_gw" {
+  for_each      = var.endpoints
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.hello.function_name
+  function_name = aws_lambda_function.lambda[each.key].function_name
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
-}
-
-output "auth_domain" {
-  value       = "${aws_cognito_user_pool_domain.pool_domain.domain}.auth.${var.region}.amazoncognito.com"
-  description = "URL to request for authentication in the frontend"
-}
-
-output "frontend_url" {
-  value       = "https://${aws_amplify_branch.prod_branch.branch_name}.${aws_amplify_app.frontend.id}.amplifyapp.com"
-  description = "URL to redirect an authenticated user"
 }
