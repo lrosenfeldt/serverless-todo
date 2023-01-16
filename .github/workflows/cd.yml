@@ -45,7 +45,7 @@ jobs:
       - name: Generate infrastructure plan via Terraform
         working-directory: ./infra
         id: tf_plan
-        if: github.event_name == "pull_request"
+        if: github.event_name == 'pull_request'
         run: terraform plan -no-color -input-false
         continue-on-error: true
       - name: Post terraform plan to PR
