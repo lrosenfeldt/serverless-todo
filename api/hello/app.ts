@@ -9,6 +9,10 @@ export async function handler(
 
   return {
     statusCode: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "content-type": "application/json",
+    },
     body: JSON.stringify({
       message,
       timestamp,
