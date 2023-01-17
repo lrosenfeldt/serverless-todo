@@ -18,10 +18,7 @@ function App() {
 
   useEffect(() => {
     getIdToken();
-    if (idToken.length > 0) {
-      getAllTodos();
-    }
-  }, [idToken]);
+  }, []);
 
   axios.interceptors.response.use(
     (response) => {
@@ -53,26 +50,6 @@ function App() {
     });
   };
 
-  const getAllTodos = async () => {
-    const result = await axios({
-      url: `${config.api_base_url}/item/`,
-      headers: {
-        Authorization: idToken,
-      },
-    }).catch((error) => {
-      console.log(error);
-    });
-
-    console.log(result);
-
-    if (result && result.status === 401) {
-      clearCredentials();
-    } else if (result && result.status === 200) {
-      console.log(result.data.Items);
-      setToDos(result.data.Items);
-    }
-  };
-
   return (
     <div className="App">
       <Container>
@@ -97,8 +74,7 @@ function App() {
               <img src={logo} alt="Logo" />
             </Col>
             <Col md="6">
-              <Todo />
-              {/* {idToken.length > 0 ? (
+              {idToken.length > 0 ? (
                 <Todo />
               ) : (
                 <Button
@@ -108,7 +84,7 @@ function App() {
                 >
                   Log In
                 </Button>
-              )} */}
+              )}
             </Col>
           </Row>
         </Jumbotron>
