@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: ["./api/hello", "./api/hello", "./www"]
+        package: ["./api/hello", "./api/downgrade-css", "./www"]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
