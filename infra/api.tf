@@ -83,6 +83,12 @@ resource "aws_iam_role_policy_attachment" "lambda_policy" {
 resource "aws_apigatewayv2_api" "lambda" {
   name          = "serverless_lambda_gw"
   protocol_type = "HTTP"
+  cors_configuration {
+    allow_origins = ["http://localhost:8080", "http://localhost:3000", "https://${aws_amplify_branch.prod_branch.branch_name}.${aws_amplify_app.frontend.id}.amplifyapp.com"]
+    allow_headers = ["content-type"]
+    allow_methods = ["POST", "GET", "OPTIONS"]
+    max_age       = 300
+  }
 }
 
 resource "aws_apigatewayv2_stage" "lambda" {
@@ -109,11 +115,13 @@ resource "aws_apigatewayv2_stage" "lambda" {
 }
 
 resource "aws_apigatewayv2_integration" "lambda" {
-  for_each           = var.endpoints
-  api_id             = aws_apigatewayv2_api.lambda.id
-  integration_uri    = aws_lambda_function.lambda[each.key].invoke_arn
-  integration_type   = "AWS_PROXY"
-  integration_method = "POST"
+  for_each               = var.endpoints
+  api_id                 = aws_apigatewayv2_api.lambda.id
+  integration_uri        = aws_lambda_function.lambda[each.key].invoke_arn
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  passthrough_behavior   = "WHEN_NO_MATCH"
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_route" "lambda" {

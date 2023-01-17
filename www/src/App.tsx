@@ -6,7 +6,7 @@ import "./App.css";
 import logo from "./assets/aws.png";
 
 import config from "./config";
-import Hello from "./Hello";
+import Todo from "./Todo";
 
 function App() {
   const [alert, setAlert] = useState("");
@@ -18,10 +18,7 @@ function App() {
 
   useEffect(() => {
     getIdToken();
-    if (idToken.length > 0) {
-      getAllTodos();
-    }
-  }, [idToken]);
+  }, []);
 
   axios.interceptors.response.use(
     (response) => {
@@ -53,26 +50,6 @@ function App() {
     });
   };
 
-  const getAllTodos = async () => {
-    const result = await axios({
-      url: `${config.api_base_url}/item/`,
-      headers: {
-        Authorization: idToken,
-      },
-    }).catch((error) => {
-      console.log(error);
-    });
-
-    console.log(result);
-
-    if (result && result.status === 401) {
-      clearCredentials();
-    } else if (result && result.status === 200) {
-      console.log(result.data.Items);
-      setToDos(result.data.Items);
-    }
-  };
-
   return (
     <div className="App">
       <Container>
@@ -98,7 +75,7 @@ function App() {
             </Col>
             <Col md="6">
               {idToken.length > 0 ? (
-                <Hello />
+                <Todo />
               ) : (
                 <Button
                   href={`https://${config.cognito_hosted_domain}/login?response_type=token&client_id=${config.aws_user_pools_web_client_id}&redirect_uri=${config.redirect_url}`}

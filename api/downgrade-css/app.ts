@@ -8,7 +8,7 @@ function validate(
   try {
     const asJson = JSON.parse(body);
     if (typeof asJson === "object" && asJson !== null) {
-      if (asJson.css && typeof asJson.css === "string") {
+      if (asJson?.css && typeof asJson?.css === "string") {
         const parsedBody = asJson as { css: string; [key: string]: unknown };
         return {
           err: false,
@@ -18,8 +18,9 @@ function validate(
         };
       }
     }
+    throw new Error();
   } catch (error) {
-    console.error("Error::InvalidBody: ", body);
+    console.error("Error::InvalidBody: ", JSON.stringify(body));
     return {
       err: true,
       body: null,
@@ -36,6 +37,10 @@ export async function handler(
   if (err) {
     return {
       statusCode: 400,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "content-type": "application/json",
+      },
       body: JSON.stringify({
         success: false,
         message: "malformatted body",
@@ -48,6 +53,10 @@ export async function handler(
 
     return {
       statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "content-type": "application/json",
+      },
       body: JSON.stringify({
         success: true,
         css: styles.css,
@@ -56,6 +65,10 @@ export async function handler(
   } catch (_err) {
     return {
       statusCode: 400,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "content-type": "application/json",
+      },
       body: JSON.stringify({
         success: false,
         message: "css not parseable",
